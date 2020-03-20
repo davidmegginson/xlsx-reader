@@ -8,8 +8,13 @@ Started by David Megginson, 2020-03-20
 """
 
 import unittest
+import xlsxr
 
-class TestXLSX(unittest.TestCase):
+from . import resolve_path
 
-    def test_placeholder(self):
+class TestWorkbook(unittest.TestCase):
+
+    def test_open_workbook_filename(self):
+        filename = resolve_path("simple.xlsx")
+        xlsxr.Workbook(filename=filename)
         self.assertTrue(True)

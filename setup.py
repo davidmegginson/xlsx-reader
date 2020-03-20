@@ -12,7 +12,7 @@ setup(
     description="Read very large Excel XLSX files efficiently",
     author='David Megginson',
     author_email='megginson@un.org',
-    install_requires=[],
-    packages=['xlsxr'],
+    install_requires=['requests',],
+    packages=['xlsxr',],
     test_suite='tests'
 )
