@@ -29,5 +29,12 @@ class Workbook:
         elif stream is not None:
             self.archive = zipfile.ZipFile(stream)
         elif url is not None:
-            pass
+            response = requests.get(url, stream=True)
+            response.raise_for_status() # force an exception if there's a problem
+            self.archive = requests.ZipFile(response.raw)
+        else:
+            raise ValueError("Must specify filename, stream, or url argument")
+            
+
+            
             

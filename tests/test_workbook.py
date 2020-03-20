@@ -15,6 +15,9 @@ from . import resolve_path
 class TestWorkbook(unittest.TestCase):
 
     def test_open_workbook_filename(self):
-        filename = resolve_path("simple.xlsx")
-        xlsxr.Workbook(filename=filename)
+        xlsxr.Workbook(filename=resolve_path("simple.xlsx"))
         self.assertTrue(True)
+
+    def test_open_workbook_stream(self):
+        with open(resolve_path("simple.xlsx"), "rb") as input:
+            xlsxr.Workbook(stream=input)
