@@ -21,3 +21,6 @@ class TestWorkbook(unittest.TestCase):
     def test_open_workbook_stream(self):
         with open(resolve_path("simple.xlsx"), "rb") as input:
             xlsxr.Workbook(stream=input)
+
+    def test_open_workbook_url(self):
+        xlsxr.Workbook(url="https://github.com/davidmegginson/xlsx-reader/blob/master/tests/files/simple.xlsx?raw=true")

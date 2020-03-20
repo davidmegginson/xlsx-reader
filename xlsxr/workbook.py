@@ -8,7 +8,7 @@ Started by David Megginson, 2020-03-20
 
 """
 
-import requests, tempfile, zipfile
+import requests, shutil, tempfile, zipfile
 
 
 class Workbook:
@@ -31,7 +31,9 @@ class Workbook:
         elif url is not None:
             response = requests.get(url, stream=True)
             response.raise_for_status() # force an exception if there's a problem
-            self.archive = requests.ZipFile(response.raw)
+            tmpfile = tempfile.TemporaryFile()
+            shutil.copyfileobj(response.raw, tmpfile)
+            self.archive = zipfile.ZipFile(tmpfile)
         else:
             raise ValueError("Must specify filename, stream, or url argument")
             
