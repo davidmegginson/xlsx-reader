@@ -1,0 +1,4 @@
+Makefile
+xlsx_reader.egg-info
+*.pyc
+__pycache__
