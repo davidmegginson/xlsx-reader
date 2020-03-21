@@ -10,6 +10,8 @@ Started by David Megginson, 2020-03-20
 
 import requests, shutil, tempfile, zipfile
 
+import xml.parsers.expat
+
 
 class Workbook:
     """ An Excel XLSX workbook
@@ -28,10 +30,10 @@ class Workbook:
         elif stream is not None:
             self.archive = zipfile.ZipFile(stream)
         elif url is not None:
-            response = requests.get(url, stream=True)
-            response.raise_for_status() # force an exception if there's a problem
             tmpfile = tempfile.TemporaryFile()
-            shutil.copyfileobj(response.raw, tmpfile)
+            with requests.get(url, stream=True) as response:
+                response.raise_for_status() # force an exception if there's a problem
+                shutil.copyfileobj(response.raw, tmpfile)
             self.archive = zipfile.ZipFile(tmpfile)
         else:
             raise ValueError("Must specify filename, stream, or url argument")
@@ -39,13 +41,31 @@ class Workbook:
         self.setup() # will throw an exception if it's not an XLSX file
             
 
-    def setup (self):
+    def setup(self):
         """ Set up the workbook 
         @raises TypeError: if the zip file is not an XLSX file
         """
-        for item in self.archive.infolist():
-            if item.filename == "xl/workbook.xml":
-                self.workbook_item = item
-                return
-        raise TypeError("Zip archive is not an Excel XLSX file")
+
+        self.sheet_info = list()
+        
+        try:
+            with self.archive.open("xl/workbook.xml", "r") as stream:
+                self.parse_workbook(stream)
+        except KeyError:
+            raise TypeError("Zip archive is not an Excel XLSX workbook")
+
+    def parse_workbook(self, stream):
+
+        def start_element(name, atts):
+            if name == 'sheet':
+                self.sheet_info.append((atts['name'], atts['sheetId'],))
+
+        parser = xml.parsers.expat.ParserCreate()
+        parser.StartElementHandler = start_element
+        parser.ParseFile(stream)
+        
+    @property
+    def sheet_count(self):
+        return len(self.sheet_info)
+
             

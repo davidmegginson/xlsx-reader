@@ -16,7 +16,6 @@ class TestWorkbook(unittest.TestCase):
 
     def test_open_workbook_from_filename(self):
         xlsxr.Workbook(filename=resolve_path("simple.xlsx"))
-        self.assertTrue(True)
 
     def test_open_workbook_from_stream(self):
         with open(resolve_path("simple.xlsx"), "rb") as input:
@@ -28,3 +27,7 @@ class TestWorkbook(unittest.TestCase):
     def test_open_non_excel_archive(self):
         with self.assertRaises(TypeError):
             xlsxr.Workbook(filename=resolve_path("not-excel.zip"))
+
+    def test_sheet_count(self):
+        workbook = xlsxr.Workbook(filename=resolve_path("simple.xlsx"))
+        self.assertEqual(1, workbook.sheet_count)
