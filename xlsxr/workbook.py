@@ -10,7 +10,7 @@ Started by David Megginson, 2020-03-20
 
 import requests, shutil, tempfile, zipfile
 
-import xml.parsers.expat
+import xml.dom.pulldom
 
 
 class Workbook:
@@ -60,9 +60,10 @@ class Workbook:
             if name == 'sheet':
                 self.sheet_info.append((atts['name'], atts['sheetId'],))
 
-        parser = xml.parsers.expat.ParserCreate()
-        parser.StartElementHandler = start_element
-        parser.ParseFile(stream)
+        doc = xml.dom.pulldom.parse(stream)
+        for event, node in doc:
+            if event == xml.dom.pulldom.START_ELEMENT and node.localName == 'sheet':
+                self.sheet_info.append((node.getAttribute('name'), node.getAttribute('sheetId'),))
         
     @property
     def sheet_count(self):
