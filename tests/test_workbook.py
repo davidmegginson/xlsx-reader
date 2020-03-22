@@ -14,8 +14,9 @@ from . import resolve_path
 
 class TestWorkbook(unittest.TestCase):
 
-    def test_open_workbook_from_filename(self):
-        xlsxr.Workbook(filename=resolve_path("simple.xlsx"))
+    def setUp(self):
+        self.workbook = xlsxr.Workbook(filename=resolve_path("simple.xlsx"))
+
 
     def test_open_workbook_from_stream(self):
         with open(resolve_path("simple.xlsx"), "rb") as input:
@@ -29,5 +30,18 @@ class TestWorkbook(unittest.TestCase):
             xlsxr.Workbook(filename=resolve_path("not-excel.zip"))
 
     def test_sheet_count(self):
-        workbook = xlsxr.Workbook(filename=resolve_path("simple.xlsx"))
-        self.assertEqual(1, workbook.sheet_count)
+        self.assertEqual(1, self.workbook.sheet_count)
+
+    def test_shared_strings(self):
+        self.assertTrue('UNICEF' in self.workbook.shared_strings)
+        self.assertTrue('Sector/Cluster' in self.workbook.shared_strings)
+
+    def test_get_sheet(self):
+        self.assertIsNotNone(self.workbook.get_sheet(1))
+
+    def test_get_bad_sheet(self):
+        with self.assertRaises(IndexError):
+            self.workbook.get_sheet(-1)
+        with self.assertRaises(IndexError):
+            self.workbook.get_sheet(7)
+        

@@ -10,6 +10,8 @@ Started by David Megginson, 2020-03-20
 
 import requests, shutil, tempfile, zipfile
 
+import xlsxr.sheet
+
 import xml.dom.pulldom
 
 
@@ -47,26 +49,57 @@ class Workbook:
         """
 
         self.sheet_info = list()
+        self.shared_strings = list()
         
         try:
             with self.archive.open("xl/workbook.xml", "r") as stream:
                 self.parse_workbook(stream)
+            with self.archive.open("xl/sharedStrings.xml", "r") as stream:
+                self.parse_shared_strings(stream)
         except KeyError:
             raise TypeError("Zip archive is not an Excel XLSX workbook")
 
     def parse_workbook(self, stream):
-
-        def start_element(name, atts):
-            if name == 'sheet':
-                self.sheet_info.append((atts['name'], atts['sheetId'],))
-
+        """ Parse the workbook metadata """
         doc = xml.dom.pulldom.parse(stream)
         for event, node in doc:
             if event == xml.dom.pulldom.START_ELEMENT and node.localName == 'sheet':
                 self.sheet_info.append((node.getAttribute('name'), node.getAttribute('sheetId'),))
+
+
+    def parse_shared_strings(self, stream):
+        """ Parse the workbook shared strings """
         
+        in_t = False # reading actual text
+        text = None # text accumulator
+        doc = xml.dom.pulldom.parse(stream)
+
+        for event, node in doc:
+            if event == xml.dom.pulldom.START_ELEMENT:
+                if node.localName == 'si':
+                    text = None
+                elif node.localName == 't':
+                    in_t = True
+            elif event == xml.dom.pulldom.END_ELEMENT:
+                if node.localName == 'si':
+                    self.shared_strings.append(text)
+                    text = None
+                elif node.localName == 't':
+                    in_t = False
+            elif event == xml.dom.pulldom.CHARACTERS:
+                if text is None:
+                    text = node.data
+                else:
+                    text.append(node.data)
+
+    def get_sheet(self, index):
+        if index < 1 or index > self.sheet_count:
+            raise IndexError("Sheet index out of range")
+        return xlsxr.sheet.Sheet(index, self)
+
     @property
     def sheet_count(self):
         return len(self.sheet_info)
+
 
             
