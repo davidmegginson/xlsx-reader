@@ -7,7 +7,11 @@
 
 """
 
+import logging
+
 import xml.dom.pulldom
+
+logger = logging.getLogger(__name__)
 
 
 class Sheet:

@@ -1,18 +1,18 @@
 """ Class representing an Excel XLSX workbook
-Started by David Megginson, 2020-03-20
 
 @author: David Megginson
 @organization: UN Centre for Humanitarian Data
 @license: Public Domain
 @date: Started 2020-03-20
-
 """
 
-import requests, shutil, tempfile, zipfile
+import logging, requests, shutil, tempfile, zipfile
 
 import xlsxr.sheet
 
 import xml.dom.pulldom
+
+logger = logging.getLogger(__name__)
 
 
 class Workbook:
@@ -28,10 +28,13 @@ class Workbook:
         """
 
         if filename is not None:
+            logger.debug("Opening from file %s", filename)
             self.archive = zipfile.ZipFile(filename)
         elif stream is not None:
+            logger.debug("Opening from a byte stream")
             self.archive = zipfile.ZipFile(stream)
         elif url is not None:
+            logger.debug("Opening from a URL %s", url)
             tmpfile = tempfile.TemporaryFile()
             with requests.get(url, stream=True) as response:
                 response.raise_for_status() # force an exception if there's a problem
@@ -59,12 +62,14 @@ class Workbook:
         except KeyError:
             raise TypeError("Zip archive is not an Excel XLSX workbook")
 
+
     def parse_workbook(self, stream):
         """ Parse the workbook metadata """
         doc = xml.dom.pulldom.parse(stream)
         for event, node in doc:
             if event == xml.dom.pulldom.START_ELEMENT and node.localName == 'sheet':
                 self.sheet_info.append((node.getAttribute('name'), node.getAttribute('sheetId'),))
+        logger.debug("Workbook has %d sheets", self.sheet_count)
 
 
     def parse_shared_strings(self, stream):
@@ -92,10 +97,15 @@ class Workbook:
                 else:
                     text.append(node.data)
 
+        logger.debug("Workbook has %d shared strings", len(self.shared_strings))
+
+
     def get_sheet(self, index):
         if index < 1 or index > self.sheet_count:
             raise IndexError("Sheet index out of range")
+        logger.debug("Opening sheet %d", index)
         return xlsxr.sheet.Sheet(index, self)
+
 
     @property
     def sheet_count(self):

@@ -1,5 +1,4 @@
 """ Unit tests for the xlrx module
-Started by David Megginson, 2020-03-20
 
 @author: David Megginson
 @organization: UN Centre for Humanitarian Data
