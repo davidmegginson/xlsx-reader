@@ -22,7 +22,7 @@ class TestWorkbook(unittest.TestCase):
             xlsxr.Workbook(stream=input)
 
     def test_open_workbook_from_url(self):
-        xlsxr.Workbook(url="https://github.com/davidmegginson/xlsx-reader/blob/master/tests/files/simple.xlsx?raw=true")
+        xlsxr.Workbook(url="https://github.com/davidmegginson/xlsx-reader/blob/main/tests/files/simple.xlsx?raw=true")
 
     def test_open_non_excel_archive(self):
         with self.assertRaises(TypeError):

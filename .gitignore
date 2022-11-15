@@ -1,5 +1,5 @@
 *.pyc
 /.eggs
-Makefile
 __pycache__
 xlsx_reader.egg-info
+/venv
