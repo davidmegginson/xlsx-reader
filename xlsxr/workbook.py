@@ -91,7 +91,6 @@ class Workbook:
                     'state': node.getAttribute('state'),
                     'rel_id': node.getAttribute('r:id'), # FIXME use namespace
                 })
-        print(self.sheet_info)
         logger.debug("Workbook has %d sheets", self.sheet_count)
 
 

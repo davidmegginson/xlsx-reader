@@ -31,6 +31,7 @@ class Sheet:
         self.rel_id = sheet_info.get('rel_id', None)
         self.target = workbook.rels[self.rel_id]
 
+    @property
     def rows(self):
         with self.workbook.archive.open('xl/' + self.target) as stream:
             row = None

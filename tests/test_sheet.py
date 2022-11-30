@@ -43,7 +43,7 @@ class TestSheet(unittest.TestCase):
         self.assertEqual('worksheets/sheet1.xml', self.sheet.target)
 
     def test_rows(self):
-        content = [row for row in self.sheet.rows()]
+        content = [row for row in self.sheet.rows]
         self.assertEqual(self.EXPECTED_CONTENT, content)
 
 
