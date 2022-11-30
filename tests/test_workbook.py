@@ -35,6 +35,9 @@ class TestWorkbook(unittest.TestCase):
         self.assertTrue('UNICEF' in self.workbook.shared_strings)
         self.assertTrue('Sector/Cluster' in self.workbook.shared_strings)
 
+    def test_rels(self):
+        self.assertTrue('rId2' in self.workbook.rels)
+
     def test_get_sheet(self):
         self.assertIsNotNone(self.workbook.get_sheet(1))
 

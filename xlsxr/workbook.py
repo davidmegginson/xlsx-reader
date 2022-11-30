@@ -19,6 +19,8 @@ class Workbook:
     """ An Excel XLSX workbook
     """
 
+    NAMESPACE_REL = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+
     def __init__(self, filename=None, stream=None, url=None):
         """ Open an Excel file.
         One of filename, stream, and url must be specified.
@@ -53,22 +55,43 @@ class Workbook:
 
         self.sheet_info = list()
         self.shared_strings = list()
+        self.rels = dict()
         
         try:
             with self.archive.open("xl/workbook.xml", "r") as stream:
                 self.parse_workbook(stream)
             with self.archive.open("xl/sharedStrings.xml", "r") as stream:
                 self.parse_shared_strings(stream)
+            with self.archive.open("xl/_rels/workbook.xml.rels", "r") as stream:
+                self.parse_rels(stream)
         except KeyError:
             raise TypeError("Zip archive is not an Excel XLSX workbook")
 
+
+    def get_sheet(self, index):
+        if index < 1 or index > self.sheet_count:
+            raise IndexError("Sheet index out of range")
+        sheet_info = self.sheet_info[index - 1]
+        logger.debug("Opening sheet %d", index)
+        return xlsxr.sheet.Sheet(index, self, sheet_info)
+
+
+    @property
+    def sheet_count(self):
+        return len(self.sheet_info)
 
     def parse_workbook(self, stream):
         """ Parse the workbook metadata """
         doc = xml.dom.pulldom.parse(stream)
         for event, node in doc:
             if event == xml.dom.pulldom.START_ELEMENT and node.localName == 'sheet':
-                self.sheet_info.append((node.getAttribute('name'), node.getAttribute('sheetId'),))
+                self.sheet_info.append({
+                    'name': node.getAttribute('name'),
+                    'sheetId': node.getAttribute('sheetId'),
+                    'state': node.getAttribute('state'),
+                    'rel_id': node.getAttribute('r:id'), # FIXME use namespace
+                })
+        print(self.sheet_info)
         logger.debug("Workbook has %d sheets", self.sheet_count)
 
 
@@ -99,17 +122,18 @@ class Workbook:
 
         logger.debug("Workbook has %d shared strings", len(self.shared_strings))
 
+    def parse_rels(self, stream):
+        """ Parse the workbook relations """
 
-    def get_sheet(self, index):
-        if index < 1 or index > self.sheet_count:
-            raise IndexError("Sheet index out of range")
-        logger.debug("Opening sheet %d", index)
-        return xlsxr.sheet.Sheet(index, self)
+        doc = xml.dom.pulldom.parse(stream)
 
+        for event, node in doc:
+            if event == xml.dom.pulldom.START_ELEMENT:
+                if node.localName == 'Relationship':
+                    self.rels[node.getAttribute('Id')] = node.getAttribute('Target')
 
-    @property
-    def sheet_count(self):
-        return len(self.sheet_info)
+        logger.debug("Workbook has %d relations", len(self.rels))
+
 
 
             
