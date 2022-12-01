@@ -1,5 +1,23 @@
 """ Utility methods to simplify working with the DOM """
 
+def getChild(node, name):
+    """ Get the first named child Element node
+
+    Parameters:
+        node: the parent DOM element node
+        name: the child name
+
+    Return:
+        The child node, or None if none is found
+
+    """
+
+    for child in node.childNodes:
+        if child.nodeType == node.ELEMENT_NODE and child.tagName == name:
+            return child
+    return None
+        
+
 def getChildText(node, name, default=None):
     """ Get the text for the first named child of a DOM node (if it exists)
     
@@ -12,12 +30,12 @@ def getChildText(node, name, default=None):
         The text of the first matching child element, or the default if none is found.
 
     """
-    
-    for child in node.childNodes:
-        if child.nodeType == node.ELEMENT_NODE and child.tagName == name:
-            return getText(child)
-    return default
-    
+
+    child = getChild(node, name)
+    if child:
+        return getText(child)
+    else:
+        return None
 
 def getText(node):
     """ Get all the text at the top level of a DOM element
@@ -31,11 +49,15 @@ def getText(node):
 
     """
 
-    s = None
+    text = []
     for child in node.childNodes:
         if child.nodeType in (node.TEXT_NODE, node.CDATA_SECTION_NODE):
-            if s is None:
-                s = child.data
-            else:
-                s += child.data
-    return s
+            text.append(child.data)
+
+    l = len(text)
+    if l == 0:
+        return None
+    elif l == 1:
+        return text[0]
+    else:
+        return ''.join(text)

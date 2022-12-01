@@ -6,7 +6,7 @@
 @date: Started 2020-03-20
 """
 
-import logging, requests, shutil, tempfile, xlsxr.sheet, xml.dom.pulldom, zipfile
+import io, logging, requests, shutil, tempfile, xlsxr.sheet, xml.dom.pulldom, zipfile
 
 logger = logging.getLogger(__name__)
 
@@ -32,17 +32,14 @@ class Workbook:
 
         if filename is not None:
             logger.debug("Opening from file %s", filename)
-            self.archive = zipfile.ZipFile(filename)
+            self.archive = zipfile.ZipFile(filename, "r")
         elif stream is not None:
             logger.debug("Opening from a byte stream")
-            self.archive = zipfile.ZipFile(stream)
+            self.archive = zipfile.ZipFile(stream, "r")
         elif url is not None:
             logger.debug("Opening from a URL %s", url)
-            tmpfile = tempfile.TemporaryFile()
             with requests.get(url, stream=True) as response:
-                response.raise_for_status() # force an exception if there's a problem
-                shutil.copyfileobj(response.raw, tmpfile)
-            self.archive = zipfile.ZipFile(tmpfile)
+                self.archive = zipfile.ZipFile(io.BytesIO(response.content))
         else:
             raise ValueError("Must specify filename, stream, or url argument")
 

@@ -73,9 +73,7 @@ class Sheet:
                     # extract a value (expands the node)
                     elif node.localName == 'c':
                         doc.expandNode(node)
-                        datatype = node.getAttribute('t')
-                        value = xlsxr.util.getChildText(node, 'v')
-                        row.append(self.fix_value(datatype, value))
+                        row.append(self.get_value(node))
                         
                 elif event == xml.dom.pulldom.END_ELEMENT:
 
@@ -84,7 +82,7 @@ class Sheet:
                         yield row
                         
 
-    def fix_value(self, datatype, value):
+    def get_value(self, node):
         """ Clean up a value according to the datatype and the workbook's convert_values flag.
 
         Parameters:
@@ -97,12 +95,12 @@ class Sheet:
 
         """
 
+        datatype = node.getAttribute('t')
+        value = xlsxr.util.getChildText(node, 'v')
+
         # Handle the value based on the datatype (unless it's None)
 
-        if value is None:
-            pass
-
-        elif datatype == 'b': # boolean
+        if datatype == 'b': # boolean
             pass
 
         elif datatype == 'd': # date
@@ -112,7 +110,9 @@ class Sheet:
             pass
 
         elif datatype == 'inlineStr': # TODO complex inline string
-            pass
+            inline_node = xlsxr.util.getChild(node, "is")
+            if inline_node is not None:
+                value = xlsxr.util.getChildText(inline_node, "t")
 
         elif datatype == 'n': # number
             if self.workbook.convert_values:

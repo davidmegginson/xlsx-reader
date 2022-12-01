@@ -8,14 +8,12 @@ Python3 library optimised for reading very large Excel XLSX files, including tho
 ```
 from xlsxr import Workbook
 
-with open('myworkbook.xlsx', 'rb') as input:
-    workbook = Workbook(stream=input)
+workbook = Workbook(filename="myworkbook.xlsx")
 
-    for n in range(1, workbook.sheet_count + 1):
-        sheet = workbook.get_sheet(n)
-        print("Sheet ", sheet.name)
-        for row in sheet.rows:
-            print("    ", row)
+for sheet in workbook.sheets:
+    print("Sheet ", sheet.name)
+    for row in sheet.rows:
+        print(row)
 ```
 
 # Conversions
