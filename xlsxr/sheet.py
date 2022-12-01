@@ -7,7 +7,7 @@
 
 """
 
-import datetime, logging, xml.dom.pulldom
+import datetime, logging, xlsxr.util, xml.dom.pulldom
 
 logger = logging.getLogger(__name__)
 
@@ -15,70 +15,120 @@ logger = logging.getLogger(__name__)
 class Sheet:
     """ An Excel XLSX worksheet (tab) """
 
-    def __init__(self, index, workbook, sheet_info):
-        """ Open an Excel file.
-        @param index: the sheet index (1-based)
-        @param worksheet: the parent Workbook object
+    def __init__(self, workbook, name, sheet_id, state, relation_id, filename):
+        """ Open a sheet inside an Excel workbook.
+
+        @param workbook: the parent Workbook object
+        @param name: the sheet name
+        @param sheet_id: the sheet identifier
+        @param state: the sheet state (normally 'visible')
+        @param relation_id: the relation identifier for filename lookup
+        @param filename: the resolved sheet filename
+
         """
-
-        self.index = index
+        
         self.workbook = workbook
-        self.name = sheet_info.get('name', None)
-        self.sheetId = sheet_info.get('sheetId', None)
-        self.state = sheet_info.get('state', None)
-        self.rel_id = sheet_info.get('rel_id', None)
-        self.target = workbook.rels[self.rel_id]
-        if self.target.startswith('/'):
-            self.target = self.target[1:]
-        else:
-            self.target = 'xl/' + self.target
+        self.name = name
+        self.sheet_id = sheet_id
+        self.state = state
+        self.relation_id = relation_id
+        self.filename = filename
 
+        
     @property
     def rows(self):
-        with self.workbook.archive.open(self.target) as stream:
+        """Parse the rows on demand each time there is a request.
+        Uses a streaming parsing model to minimise memory usage.
+
+        If the parent workbook's convert_values flag is True, then convert
+        number strings to numbers and date values to date objects; otherwise,
+        everything will be a string.
+
+        It is safe to repeat calls to iterate over the same sheet
+        multiple times.
+
+        Returns:
+            An iterable over lists of scalar values, each representing a row
+
+        """
+        
+        with self.workbook.archive.open(self.filename) as stream:
+
+            # Used to construct each row
             row = None
-            t = None
-            v = None
+
+            # The streaming XML parser
             doc = xml.dom.pulldom.parse(stream)
+
+            # Walk through the events
             for event, node in doc:
+
+                
                 if event == xml.dom.pulldom.START_ELEMENT:
+
+                    # start a new row (don't expand, in case there are many columns)
                     if node.localName == 'row':
                         row = []
+
+                    # extract a value (expands the node)
                     elif node.localName == 'c':
-                        t = node.getAttribute('t')
-                    elif node.localName == 'v':
-                        v = ''
-                elif event == xml.dom.pulldom.CHARACTERS:
-                    if node.data is None:
-                        v = None
-                    elif v is None:
-                        v = node.data
-                    else:
-                        v += node.data
+                        doc.expandNode(node)
+                        datatype = node.getAttribute('t')
+                        value = xlsxr.util.getChildText(node, 'v')
+                        row.append(self.fix_value(datatype, value))
+                        
                 elif event == xml.dom.pulldom.END_ELEMENT:
+
+                    # finish the row and yield it to the iterator
                     if node.localName == 'row':
                         yield row
-                    elif node.localName == 'c':
-                        if t == 'b': # boolean
-                            pass
-                        elif t == 'd': # date
-                            pass
-                        elif t == 'e': # error
-                            pass
-                        elif t == 'inlineStr': # TODO complex inline string
-                            pass
-                        elif t == 'n': # number
-                            if self.workbook.convert_values:
-                                try:
-                                    if '.' in v:
-                                        v = float(v)
-                                    else:
-                                        v = int(v)
-                                except ValueError:
-                                    logger.warning("Cannot convert %s to a number", v)
-                        elif t == 's': # shared string
-                            v = self.workbook.shared_strings[int(v)]
-                        elif t == 'str': # simple inline string
-                            pass
-                        row.append(v)
                         
+
+    def fix_value(self, datatype, value):
+        """ Clean up a value according to the datatype and the workbook's convert_values flag.
+
+        Parameters:
+            datatype: the value's data type (b, d, e, inlineStr, n, s, or str)
+            value: the value as a string
+
+        Return:
+            The fixed value, possibly converted to a number or date object (if requested),
+            and looked up if it's a shared string.
+
+        """
+
+        # Handle the value based on the datatype (unless it's None)
+
+        if value is None:
+            pass
+
+        elif datatype == 'b': # boolean
+            pass
+
+        elif datatype == 'd': # date
+            pass
+
+        elif datatype == 'e': # error
+            pass
+
+        elif datatype == 'inlineStr': # TODO complex inline string
+            pass
+
+        elif datatype == 'n': # number
+            if self.workbook.convert_values:
+                try:
+                    if '.' in value:
+                        value = float(value)
+                    else:
+                        value = int(value)
+                except ValueError:
+                    logger.warning("Cannot convert %s to a number", value)
+
+        elif datatype == 's': # shared string
+            value = self.workbook.shared_strings[int(value)]
+
+        elif datatype == 'str': # simple inline string
+            pass
+
+        # return the modified value
+        return value

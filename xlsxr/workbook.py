@@ -46,23 +46,28 @@ class Workbook:
         else:
             raise ValueError("Must specify filename, stream, or url argument")
 
+        self.sheets = []
+        """ List of xlxr.sheet.Sheet objects """
+
+        self.shared_strings = []
+
+        self.relations = dict()
+        """ Dict of relations """
+        
         self.setup() # will throw an exception if it's not an XLSX file
             
 
     def setup(self):
         """ Set up the workbook 
         @raises TypeError: if the zip file is not an XLSX file
+
         """
 
-        self.sheet_info = list()
-        self.shared_strings = list()
-        self.rels = dict()
-        
         try:
-            with self.archive.open("xl/workbook.xml", "r") as stream:
-                self.parse_workbook(stream)
             with self.archive.open("xl/_rels/workbook.xml.rels", "r") as stream:
                 self.parse_rels(stream)
+            with self.archive.open("xl/workbook.xml", "r") as stream:
+                self.parse_workbook(stream)
         except KeyError:
             raise TypeError("Zip archive is not an Excel XLSX workbook")
 
@@ -74,30 +79,30 @@ class Workbook:
             
 
 
-    def get_sheet(self, index):
-        if index < 1 or index > self.sheet_count:
-            raise IndexError("Sheet index out of range")
-        sheet_info = self.sheet_info[index - 1]
-        logger.debug("Opening sheet %d", index)
-        return xlsxr.sheet.Sheet(index, self, sheet_info)
-
-
-    @property
-    def sheet_count(self):
-        return len(self.sheet_info)
-
     def parse_workbook(self, stream):
-        """ Parse the workbook metadata """
+        """ Parse the workbook metadata
+
+        Parameters:
+            stream: a file-like object (from the archive)
+        """
         doc = xml.dom.pulldom.parse(stream)
+        
         for event, node in doc:
-            if event == xml.dom.pulldom.START_ELEMENT and node.localName == 'sheet':
-                self.sheet_info.append({
-                    'name': node.getAttribute('name'),
-                    'sheetId': node.getAttribute('sheetId'),
-                    'state': node.getAttribute('state'),
-                    'rel_id': node.getAttribute('r:id'), # FIXME use namespace
-                })
-        logger.debug("Workbook has %d sheets", self.sheet_count)
+            if event == xml.dom.pulldom.START_ELEMENT:
+                if node.localName == 'sheet':
+                    name = node.getAttribute('name')
+                    sheet_id = node.getAttribute('sheetId')
+                    state = node.getAttribute('state')
+                    relation_id = node.getAttribute('r:id') # FIXME use namespace
+                    filename = self.relations.get(relation_id)
+                    if filename.startswith('/'):
+                        filename = filename[1:]
+                    else:
+                        filename = 'xl/' + filename
+                    logger.debug("Creating sheet %s", name)
+                    sheet = xlsxr.sheet.Sheet(self, name, sheet_id, state, relation_id, filename)
+                    self.sheets.append(sheet)
+        logger.debug("Workbook has %d sheets", len(self.sheets))
 
 
     def parse_shared_strings(self, stream):
@@ -135,9 +140,9 @@ class Workbook:
         for event, node in doc:
             if event == xml.dom.pulldom.START_ELEMENT:
                 if node.localName == 'Relationship':
-                    self.rels[node.getAttribute('Id')] = node.getAttribute('Target')
+                    self.relations[node.getAttribute('Id')] = node.getAttribute('Target')
 
-        logger.debug("Workbook has %d relations", len(self.rels))
+        logger.debug("Workbook has %d relations", len(self.relations))
 
     def parse_styles(self, stream):
         """ Parse the workbook styles """
@@ -158,4 +163,3 @@ class Workbook:
 
 
 
-            

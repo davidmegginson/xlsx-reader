@@ -29,21 +29,15 @@ class TestWorkbook(unittest.TestCase):
             xlsxr.Workbook(filename=resolve_path("not-excel.zip"))
 
     def test_sheet_count(self):
-        self.assertEqual(1, self.workbook.sheet_count)
+        self.assertEqual(1, len(self.workbook.sheets))
 
     def test_shared_strings(self):
         self.assertTrue('UNICEF' in self.workbook.shared_strings)
         self.assertTrue('Sector/Cluster' in self.workbook.shared_strings)
 
-    def test_rels(self):
-        self.assertTrue('rId2' in self.workbook.rels)
+    def test_relations(self):
+        self.assertTrue('rId2' in self.workbook.relations)
 
     def test_get_sheet(self):
-        self.assertIsNotNone(self.workbook.get_sheet(1))
+        self.assertIsNotNone(self.workbook.sheets[0])
 
-    def test_get_bad_sheet(self):
-        with self.assertRaises(IndexError):
-            self.workbook.get_sheet(-1)
-        with self.assertRaises(IndexError):
-            self.workbook.get_sheet(7)
-        

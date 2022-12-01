@@ -14,9 +14,9 @@ from . import resolve_path
 class TestSheet(unittest.TestCase):
 
     EXPECTED_CONTENT = [
-        ['Qué?', 'Qué?', 'Qué?', 'Quién?', 'Para quién?', 'Para quién?', 'Dónde?', 'Dónde?', 'Cuándo?'],
-        ['Registro', 'Sector/Cluster', 'Subsector', 'Organización', 'Hombres', 'Mujeres', 'País', 'Departamento/Provincia/Estado', 'Departamento/Provincia/Estado'],
-        ['Departamento/Provincia/Estado', '#sector+es', '#subsector+es', '#org+es', '#targeted+f', '#targeted+m', '#country', '#adm1', '#date+reported'],
+        ['Qué?', None, None, 'Quién?', 'Para quién?', None, 'Dónde?', None, 'Cuándo?'],
+        ['Registro', 'Sector/Cluster', 'Subsector', 'Organización', 'Hombres', 'Mujeres', 'País', 'Departamento/Provincia/Estado', None],
+        [None, '#sector+es', '#subsector+es', '#org+es', '#targeted+f', '#targeted+m', '#country', '#adm1', '#date+reported'],
         ['001', 'WASH', 'Higiene', 'ACNUR', '100', '100', 'Panamá', 'Los Santos', '42064'], # FIXME - is a date
         ['002', 'Salud', 'Vacunación', 'OMS', 'Colombia', 'Cauca'],
         ['003', 'Educación', 'Formación de enseñadores', 'UNICEF', '250', '300', 'Colombia', 'Chocó'],
@@ -24,9 +24,9 @@ class TestSheet(unittest.TestCase):
     ]
     
     EXPECTED_CONTENT_CONVERTED = [
-        ['Qué?', 'Qué?', 'Qué?', 'Quién?', 'Para quién?', 'Para quién?', 'Dónde?', 'Dónde?', 'Cuándo?'],
-        ['Registro', 'Sector/Cluster', 'Subsector', 'Organización', 'Hombres', 'Mujeres', 'País', 'Departamento/Provincia/Estado', 'Departamento/Provincia/Estado'],
-        ['Departamento/Provincia/Estado', '#sector+es', '#subsector+es', '#org+es', '#targeted+f', '#targeted+m', '#country', '#adm1', '#date+reported'],
+        ['Qué?', None, None, 'Quién?', 'Para quién?', None, 'Dónde?', None, 'Cuándo?'],
+        ['Registro', 'Sector/Cluster', 'Subsector', 'Organización', 'Hombres', 'Mujeres', 'País', 'Departamento/Provincia/Estado', None],
+        [None, '#sector+es', '#subsector+es', '#org+es', '#targeted+f', '#targeted+m', '#country', '#adm1', '#date+reported'],
         ['001', 'WASH', 'Higiene', 'ACNUR', 100, 100, 'Panamá', 'Los Santos', 42064], # FIXME - is a date
         ['002', 'Salud', 'Vacunación', 'OMS', 'Colombia', 'Cauca'],
         ['003', 'Educación', 'Formación de enseñadores', 'UNICEF', 250, 300, 'Colombia', 'Chocó'],
@@ -35,22 +35,22 @@ class TestSheet(unittest.TestCase):
     
     def setUp(self):
         self.workbook = xlsxr.Workbook(filename=resolve_path("simple.xlsx"))
-        self.sheet = self.workbook.get_sheet(1)
+        self.sheet = self.workbook.sheets[0]
 
     def test_name(self):
         self.assertEqual('input-valid', self.sheet.name)
 
-    def test_sheetId(self):
-        self.assertEqual('1', self.sheet.sheetId)
+    def test_sheet_id(self):
+        self.assertEqual('1', self.sheet.sheet_id)
 
     def test_state(self):
         self.assertEqual('visible', self.sheet.state)
 
-    def test_rel_id(self):
-        self.assertEqual('rId2', self.sheet.rel_id)
+    def test_relation_id(self):
+        self.assertEqual('rId2', self.sheet.relation_id)
 
-    def test_target(self):
-        self.assertEqual('worksheets/sheet1.xml', self.sheet.target)
+    def test_filename(self):
+        self.assertEqual('xl/worksheets/sheet1.xml', self.sheet.filename)
 
     def test_rows(self):
         content = [row for row in self.sheet.rows]
