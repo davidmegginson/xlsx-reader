@@ -28,10 +28,14 @@ class Sheet:
         self.state = sheet_info.get('state', None)
         self.rel_id = sheet_info.get('rel_id', None)
         self.target = workbook.rels[self.rel_id]
+        if self.target.startswith('/'):
+            self.target = self.target[1:]
+        else:
+            self.target = 'xl/' + self.target
 
     @property
     def rows(self):
-        with self.workbook.archive.open('xl/' + self.target) as stream:
+        with self.workbook.archive.open(self.target) as stream:
             row = None
             t = None
             v = None
@@ -45,7 +49,12 @@ class Sheet:
                     elif node.localName == 'v':
                         v = ''
                 elif event == xml.dom.pulldom.CHARACTERS:
-                    v += node.data
+                    if node.data is None:
+                        v = None
+                    elif v is None:
+                        v = node.data
+                    else:
+                        v += node.data
                 elif event == xml.dom.pulldom.END_ELEMENT:
                     if node.localName == 'row':
                         yield row

@@ -61,12 +61,17 @@ class Workbook:
         try:
             with self.archive.open("xl/workbook.xml", "r") as stream:
                 self.parse_workbook(stream)
-            with self.archive.open("xl/sharedStrings.xml", "r") as stream:
-                self.parse_shared_strings(stream)
             with self.archive.open("xl/_rels/workbook.xml.rels", "r") as stream:
                 self.parse_rels(stream)
         except KeyError:
             raise TypeError("Zip archive is not an Excel XLSX workbook")
+
+        try:
+            with self.archive.open("xl/sharedStrings.xml", "r") as stream:
+                self.parse_shared_strings(stream)
+        except KeyError:
+            logger.info("No sharedStrings.xml in this workbook")
+            
 
 
     def get_sheet(self, index):
