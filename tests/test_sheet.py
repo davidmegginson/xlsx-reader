@@ -14,13 +14,23 @@ from . import resolve_path
 class TestSheet(unittest.TestCase):
 
     EXPECTED_CONTENT = [
-        ['Qué?', 'Qué?', 'Qué?', 'Quién?', 'Para quién?', 'Para quién?', 'Dónde?', 'Cuándo?', 'Cuándo?'],
+        ['Qué?', 'Qué?', 'Qué?', 'Quién?', 'Para quién?', 'Para quién?', 'Dónde?', 'Dónde?', 'Cuándo?'],
         ['Registro', 'Sector/Cluster', 'Subsector', 'Organización', 'Hombres', 'Mujeres', 'País', 'Departamento/Provincia/Estado', 'Departamento/Provincia/Estado'],
         ['Departamento/Provincia/Estado', '#sector+es', '#subsector+es', '#org+es', '#targeted+f', '#targeted+m', '#country', '#adm1', '#date+reported'],
-        ['001', 'WASH', 'Higiene', 'ACNUR', '100', '100', 'Panamá', 'Los Santos', '1 March 2015'],
+        ['001', 'WASH', 'Higiene', 'ACNUR', '100', '100', 'Panamá', 'Los Santos', '42064'], # FIXME - is a date
         ['002', 'Salud', 'Vacunación', 'OMS', 'Colombia', 'Cauca'],
         ['003', 'Educación', 'Formación de enseñadores', 'UNICEF', '250', '300', 'Colombia', 'Chocó'],
         ['004', 'WASH', 'Urbano', 'OMS', '80', '95', 'Venezuela', 'Amazonas'],
+    ]
+    
+    EXPECTED_CONTENT_CONVERTED = [
+        ['Qué?', 'Qué?', 'Qué?', 'Quién?', 'Para quién?', 'Para quién?', 'Dónde?', 'Dónde?', 'Cuándo?'],
+        ['Registro', 'Sector/Cluster', 'Subsector', 'Organización', 'Hombres', 'Mujeres', 'País', 'Departamento/Provincia/Estado', 'Departamento/Provincia/Estado'],
+        ['Departamento/Provincia/Estado', '#sector+es', '#subsector+es', '#org+es', '#targeted+f', '#targeted+m', '#country', '#adm1', '#date+reported'],
+        ['001', 'WASH', 'Higiene', 'ACNUR', 100, 100, 'Panamá', 'Los Santos', 42064], # FIXME - is a date
+        ['002', 'Salud', 'Vacunación', 'OMS', 'Colombia', 'Cauca'],
+        ['003', 'Educación', 'Formación de enseñadores', 'UNICEF', 250, 300, 'Colombia', 'Chocó'],
+        ['004', 'WASH', 'Urbano', 'OMS', 80, 95, 'Venezuela', 'Amazonas'],
     ]
     
     def setUp(self):
@@ -44,7 +54,13 @@ class TestSheet(unittest.TestCase):
 
     def test_rows(self):
         content = [row for row in self.sheet.rows]
+        print(content)
         self.assertEqual(self.EXPECTED_CONTENT, content)
+
+    def test_rows_converted(self):
+        self.workbook.convert_values = True
+        content = [row for row in self.sheet.rows]
+        self.assertEqual(self.EXPECTED_CONTENT_CONVERTED, content)
 
 
         

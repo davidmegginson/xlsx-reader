@@ -6,11 +6,7 @@
 @date: Started 2020-03-20
 """
 
-import logging, requests, shutil, tempfile, zipfile
-
-import xlsxr.sheet
-
-import xml.dom.pulldom
+import logging, requests, shutil, tempfile, xlsxr.sheet, xml.dom.pulldom, zipfile
 
 logger = logging.getLogger(__name__)
 
@@ -21,13 +17,18 @@ class Workbook:
 
     NAMESPACE_REL = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 
-    def __init__(self, filename=None, stream=None, url=None):
+    def __init__(self, filename=None, stream=None, url=None, convert_values=False):
         """ Open an Excel file.
         One of filename, stream, and url must be specified.
-        @param filename: path to an Excel file on the local system.
-        @param stream: file-like object (byte stream)
-        @param url: web address of a remote Excel file
+
+        Parameters:
+            filename: path to an Excel file on the local system.
+            stream: file-like object (byte stream)
+            url: web address of a remote Excel file
+            convert_values: if True, convert numbers and dates from strings to Python values (default is False)
         """
+
+        self.convert_values = convert_values
 
         if filename is not None:
             logger.debug("Opening from file %s", filename)
@@ -132,6 +133,23 @@ class Workbook:
                     self.rels[node.getAttribute('Id')] = node.getAttribute('Target')
 
         logger.debug("Workbook has %d relations", len(self.rels))
+
+    def parse_styles(self, stream):
+        """ Parse the workbook styles """
+
+        doc = xml.dom.pulldom.parse(stream)
+        in_cellXfs = False
+        current_style = {}
+
+        for event, node in doc:
+            if event == xml.dom.pulldom.START_ELEMENT:
+                if node.localName == 'cellXfs':
+                    in_cellXfs = True
+                elif node.localName == 'xf' and in_cellXfs:
+                    pass
+            elif event == xml.dom.pulldom.END_ELEMENT:
+                if node.localName == 'cellXfs':
+                    in_cellXfs = False
 
 
 

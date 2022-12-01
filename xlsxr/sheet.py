@@ -7,9 +7,7 @@
 
 """
 
-import logging
-
-import xml.dom.pulldom
+import datetime, logging, xml.dom.pulldom
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +58,15 @@ class Sheet:
                             pass
                         elif t == 'inlineStr': # TODO complex inline string
                             pass
+                        elif t == 'n': # number
+                            if self.workbook.convert_values:
+                                try:
+                                    if '.' in v:
+                                        v = float(v)
+                                    else:
+                                        v = int(v)
+                                except ValueError:
+                                    logger.warning("Cannot convert %s to a number", v)
                         elif t == 's': # shared string
                             v = self.workbook.shared_strings[int(v)]
                         elif t == 'str': # simple inline string
