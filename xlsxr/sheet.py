@@ -7,7 +7,9 @@
 
 """
 
-import datetime, logging, xlsxr.util, xml.dom.pulldom
+import datetime, logging, xml.sax
+
+from xlsxr.util import getAtt
 
 logger = logging.getLogger(__name__)
 
@@ -33,88 +35,117 @@ class Sheet:
         self.state = state
         self.relation_id = relation_id
         self.filename = filename
+        self.raw_rows = None
 
         
     @property
     def rows(self):
-        """Parse the rows on demand each time there is a request.
-        Uses a streaming parsing model to minimise memory usage.
+        """ Parse the rows on demand """
 
-        If the parent workbook's convert_values flag is True, then convert
-        number strings to numbers and date values to date objects; otherwise,
-        everything will be a string.
+        if self.raw_rows is None:
+            self.raw_rows = []
+            with self.workbook.archive.open(self.filename) as stream:
+                handler = SheetSAXHandler(self)
+                xml.sax.parse(stream, handler)
 
-        It is safe to repeat calls to iterate over the same sheet
-        multiple times.
+        return self.raw_rows
 
-        Returns:
-            An iterable over lists of scalar values, each representing a row
+class SheetSAXHandler(xml.sax.ContentHandler):
 
-        """
-        
-        with self.workbook.archive.open(self.filename) as stream:
+    def __init__(self, sheet):
+        super().__init__()
+        self.sheet = sheet
+        self.workbook = sheet.workbook
 
-            # Used to construct each row
+        # Accumulators
+        self.row = None
+        self.datatype = None
+        self.chunks = []
+
+        # Very simple parse context
+        self.in_row = False
+        self.in_c = False
+        self.in_v = False
+        self.in_is = False
+        self.in_t = False
+
+    def startDocument(self):
+        pass
+
+    def endDocument(self):
+        pass
+
+    def startElement(self, name, attributes):
+
+        if name == 'row':
+            self.in_row = True
+            self.row = []
+
+        elif name == 'c' and self.in_row:
+            self.in_c = True
+            self.datatype = getAtt(attributes, 't')
+            self.style = getAtt(attributes, 's')
+            self.chunks = []
+
+        elif name == 'v' and self.in_c:
+            self.in_v = True
+
+        elif name == 'is' and self.in_c:
+            self.in_is = True
+
+        elif name == 't' and self.in_is:
+            self.in_t = True
+
+
+    def endElement(self, name):
+
+        if name == 'row':
+            in_row = False
+            self.sheet.raw_rows.append(self.row)
             row = None
 
-            # The streaming XML parser
-            doc = xml.dom.pulldom.parse(stream)
+        elif name == 'c' and self.in_row:
+            in_c = False
+            self.row.append(self.make_value())
+            self.chunks = None
+            self.datatype = None
+            self.style = None
 
-            # Walk through the events
-            for event, node in doc:
+        elif name == 'v' and self.in_c:
+            self.in_v = False
 
-                
-                if event == xml.dom.pulldom.START_ELEMENT:
+        elif name == 'is' and self.in_c:
+            self.in_is = False
 
-                    # start a new row (don't expand, in case there are many columns)
-                    if node.localName == 'row':
-                        row = []
+        elif name == 't' and self.in_is:
+            self.in_t = False
 
-                    # extract a value (expands the node)
-                    elif node.localName == 'c':
-                        doc.expandNode(node)
-                        row.append(self.get_value(node))
-                        
-                elif event == xml.dom.pulldom.END_ELEMENT:
 
-                    # finish the row and yield it to the iterator
-                    if node.localName == 'row':
-                        yield row
-                        
+    def characters(self, content):
 
-    def get_value(self, node):
-        """ Clean up a value according to the datatype and the workbook's convert_values flag.
+        if self.in_v or self.in_t:
+            self.chunks.append(content)
 
-        Parameters:
-            datatype: the value's data type (b, d, e, inlineStr, n, s, or str)
-            value: the value as a string
+    def make_value(self):
 
-        Return:
-            The fixed value, possibly converted to a number or date object (if requested),
-            and looked up if it's a shared string.
+        if len(self.chunks) == 0:
+            return None
+        
+        value = ''.join(self.chunks)
 
-        """
-
-        datatype = node.getAttribute('t')
-        value = xlsxr.util.getChildText(node, 'v')
-
-        # Handle the value based on the datatype (unless it's None)
-
-        if datatype == 'b': # boolean
+        if self.datatype == 'b': # boolean
             pass
 
-        elif datatype == 'd': # date
+        elif self.datatype == 'd': # date
             pass
 
-        elif datatype == 'e': # error
+        elif self.datatype == 'e': # error
             pass
 
-        elif datatype == 'inlineStr': # TODO complex inline string
-            inline_node = xlsxr.util.getChild(node, "is")
-            if inline_node is not None:
-                value = xlsxr.util.getChildText(inline_node, "t")
+        elif self.datatype == 'inlineStr':
+            pass
 
-        elif datatype == 'n': # number
+        elif self.datatype == 'n': # number
             if self.workbook.convert_values:
                 try:
                     if '.' in value:
@@ -124,10 +155,10 @@ class Sheet:
                 except ValueError:
                     logger.warning("Cannot convert %s to a number", value)
 
-        elif datatype == 's': # shared string
+        elif self.datatype == 's': # shared string
             value = self.workbook.shared_strings[int(value)]
 
-        elif datatype == 'str': # simple inline string
+        elif self.datatype == 'str': # simple inline string
             pass
 
         # return the modified value

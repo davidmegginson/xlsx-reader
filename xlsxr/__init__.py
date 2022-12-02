@@ -15,6 +15,9 @@ if sys.version_info < (3,):
 
 from xlsxr.workbook import Workbook
 
+SPREADSHEETML_NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+RELATIONS_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+
 __version__="0.1"
 """Module version number
 see https://www.python.org/dev/peps/pep-0396/
