@@ -36,21 +36,35 @@ class Sheet:
         self.relation_id = relation_id
         self.filename = filename
         self.raw_rows = None
+        self.raw_merges = None
 
         
     @property
     def rows(self):
-        """ Parse the rows on demand """
-
+        """ Get the rows, parsing the sheet on demand """
         if self.raw_rows is None:
-            self.raw_rows = []
-            with self.workbook.archive.open(self.filename) as stream:
-                handler = SheetSAXHandler(self)
-                xml.sax.parse(stream, handler)
-
+            self.__parse_sheet()
         return self.raw_rows
 
-class SheetSAXHandler(xml.sax.ContentHandler):
+    @property
+    def merges(self):
+        """ Get the merges, parsing the sheet on demand """
+        if self.raw_merges is None:
+            self.__parse_sheet()
+        return self.raw_merges
+
+    def __parse_sheet(self):
+        """ On-demand parsing of the sheet itself """
+
+        self.raw_rows = []
+        self.raw_merges = []
+        handler = _SheetSAXHandler(self)
+
+        with self.workbook.archive.open(self.filename) as stream:
+            xml.sax.parse(stream, handler)
+
+
+class _SheetSAXHandler(xml.sax.ContentHandler):
 
     def __init__(self, sheet):
         super().__init__()
@@ -69,12 +83,7 @@ class SheetSAXHandler(xml.sax.ContentHandler):
         self.in_is = False
         self.in_t = False
 
-    def startDocument(self):
-        pass
-
-    def endDocument(self):
-        pass
-
+        
     def startElement(self, name, attributes):
 
         if name == 'row':
@@ -95,6 +104,9 @@ class SheetSAXHandler(xml.sax.ContentHandler):
         elif name == 't' and self.in_is:
             self.in_t = True
 
+        elif name == 'mergeCell':
+            self.sheet.raw_merges.append(getAtt(attributes, 'ref'))
+
 
     def endElement(self, name):
 
@@ -104,7 +116,7 @@ class SheetSAXHandler(xml.sax.ContentHandler):
 
         elif name == 'c' and self.in_row:
             in_c = False
-            self.row.append(self.make_value())
+            self.row.append(self.__make_value())
             self.chunks.clear()
             self.datatype = None
             self.style = None
@@ -124,11 +136,20 @@ class SheetSAXHandler(xml.sax.ContentHandler):
         if self.in_v or self.in_t:
             self.chunks.append(content)
 
-    def make_value(self):
+            
+    def __make_value(self):
+        """ Figure out the scalar value to include for a cell 
 
+        Uses the current type and style, and may look up styles and shared strings
+        in the parent workbook.
+
+        """
+
+        # Special case: if we haven't seen any text chunks, return None
         if len(self.chunks) == 0:
             return None
-        
+
+        # Merge all the text chunks (more efficient than using + each time
         value = ''.join(self.chunks)
 
         if self.datatype == 'b': # boolean

@@ -32,6 +32,8 @@ class TestSheet(unittest.TestCase):
         ['003', 'Educación', 'Formación de enseñadores', 'UNICEF', 250, 300, 'Colombia', 'Chocó'],
         ['004', 'WASH', 'Urbano', 'OMS', 80, 95, 'Venezuela', 'Amazonas'],
     ]
+
+    EXPECTED_MERGES = ['A1:C1', 'E1:F1', 'G1:H1',]
     
     def setUp(self):
         self.workbook = xlsxr.Workbook(filename=resolve_path("simple.xlsx"))
@@ -62,5 +64,7 @@ class TestSheet(unittest.TestCase):
         content = [row for row in self.sheet.rows]
         self.assertEqual(self.EXPECTED_CONTENT_CONVERTED, content)
 
+    def test_merges(self):
+        self.assertEqual(self.EXPECTED_MERGES, self.sheet.merges)
 
         
