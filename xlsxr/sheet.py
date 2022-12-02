@@ -9,7 +9,7 @@
 
 import datetime, logging, xml.sax
 
-from xlsxr.util import getAtt
+from xlsxr.util import getAttr, makeFloat, makeInt, makeBool
 
 logger = logging.getLogger(__name__)
 
@@ -28,157 +28,190 @@ class Sheet:
         @param filename: the resolved sheet filename
 
         """
-        
+
+        # information from the workbook
         self.workbook = workbook
         self.name = name
         self.sheet_id = sheet_id
         self.state = state
         self.relation_id = relation_id
         self.filename = filename
-        self.raw_rows = None
-        self.raw_merges = None
 
-        
+        # information parsed from the spreadsheet XML file on demand
+        self._raw_cols = None
+        self._raw_rows = None
+        self._raw_merges = None
+
+    @property
+    def cols(self):
+        """ Get the columns, parsing the sheet on demand """
+        if self._raw_cols is None:
+            self.__parse_sheet()
+        return self._raw_cols
+
     @property
     def rows(self):
         """ Get the rows, parsing the sheet on demand """
-        if self.raw_rows is None:
+        if self._raw_rows is None:
             self.__parse_sheet()
-        return self.raw_rows
+        return self._raw_rows
 
     @property
     def merges(self):
         """ Get the merges, parsing the sheet on demand """
-        if self.raw_merges is None:
+        if self._raw_merges is None:
             self.__parse_sheet()
-        return self.raw_merges
+        return self._raw_merges
 
     def __parse_sheet(self):
         """ On-demand parsing of the sheet itself """
 
-        self.raw_rows = []
-        self.raw_merges = []
-        handler = _SheetSAXHandler(self)
+        handler = Sheet.__SheetSAXHandler(self)
 
         with self.workbook.archive.open(self.filename) as stream:
             xml.sax.parse(stream, handler)
 
 
-class _SheetSAXHandler(xml.sax.ContentHandler):
+    class __SheetSAXHandler(xml.sax.ContentHandler):
+        """ SAX content handler for parsing a sheet XML file
 
-    def __init__(self, sheet):
-        super().__init__()
-        self.sheet = sheet
-        self.workbook = sheet.workbook
-
-        # Accumulators
-        self.row = None
-        self.datatype = None
-        self.chunks = [] # we can reuse this list
-
-        # Very simple parse context
-        self.in_row = False
-        self.in_c = False
-        self.in_v = False
-        self.in_is = False
-        self.in_t = False
-
+        Populates the following lists in the parent sheet:
         
-    def startElement(self, name, attributes):
+        - _raw_cols
+        - _raw_rows
+        - _raw_merges
 
-        if name == 'row':
-            self.in_row = True
-            self.row = []
-
-        elif name == 'c' and self.in_row:
-            self.in_c = True
-            self.datatype = getAtt(attributes, 't')
-            self.style = getAtt(attributes, 's')
-
-        elif name == 'v' and self.in_c:
-            self.in_v = True
-
-        elif name == 'is' and self.in_c:
-            self.in_is = True
-
-        elif name == 't' and self.in_is:
-            self.in_t = True
-
-        elif name == 'mergeCell':
-            self.sheet.raw_merges.append(getAtt(attributes, 'ref'))
-
-
-    def endElement(self, name):
-
-        if name == 'row':
-            in_row = False
-            self.sheet.raw_rows.append(self.row)
-
-        elif name == 'c' and self.in_row:
-            in_c = False
-            self.row.append(self.__make_value())
-            self.chunks.clear()
-            self.datatype = None
-            self.style = None
-
-        elif name == 'v' and self.in_c:
-            self.in_v = False
-
-        elif name == 'is' and self.in_c:
-            self.in_is = False
-
-        elif name == 't' and self.in_is:
-            self.in_t = False
-
-
-    def characters(self, content):
-
-        if self.in_v or self.in_t:
-            self.chunks.append(content)
-
-            
-    def __make_value(self):
-        """ Figure out the scalar value to include for a cell 
-
-        Uses the current type and style, and may look up styles and shared strings
-        in the parent workbook.
+        TODO: add XML Namespace support
 
         """
 
-        # Special case: if we haven't seen any text chunks, return None
-        if len(self.chunks) == 0:
-            return None
+        def __init__(self, sheet):
+            super().__init__()
+            self.__sheet = sheet
+            self.__workbook = sheet.workbook
 
-        # Merge all the text chunks (more efficient than using + each time
-        value = ''.join(self.chunks)
+            # Reset accumulators in parent sheet
+            self.__sheet._raw_cols = []
+            self.__sheet._raw_rows = []
+            self.__sheet._raw_merges = []
 
-        if self.datatype == 'b': # boolean
-            pass
+            # Local accumulators for the handler
+            self.__row = None
+            self.__datatype = None
+            self.__chunks = [] # we can reuse this list
 
-        elif self.datatype == 'd': # date
-            pass
+            # Very simple parse context
+            self.__in_row = False
+            self.__in_c = False
+            self.__in_v = False
+            self.__in_is = False
+            self.__in_t = False
 
-        elif self.datatype == 'e': # error
-            pass
 
-        elif self.datatype == 'inlineStr':
-            pass
+        def startElement(self, name, attributes):
 
-        elif self.datatype == 'n': # number
-            if self.workbook.convert_values:
-                try:
-                    if '.' in value:
-                        value = float(value)
-                    else:
-                        value = int(value)
-                except ValueError:
-                    logger.warning("Cannot convert %s to a number", value)
+            if name == 'col':
+                self.__sheet._raw_cols.append({
+                    "collapsed": makeBool(getAttr(attributes, "collapsed")),
+                    "hidden": makeBool(getAttr(attributes, "hidden")),
+                    "min": makeInt(getAttr(attributes, "min")),
+                    "max": makeInt(getAttr(attributes, "max")),
+                    "style": getAttr(attributes, "style"),
+                })
 
-        elif self.datatype == 's': # shared string
-            value = self.workbook.shared_strings[int(value)]
+            if name == 'row':
+                self.__in_row = True
+                self.__row = []
 
-        elif self.datatype == 'str': # simple inline string
-            pass
+            elif name == 'c' and self.__in_row:
+                self.__in_c = True
+                self.__datatype = getAttr(attributes, 't')
+                self.style = getAttr(attributes, 's')
 
-        # return the modified value
-        return value
+            elif name == 'v' and self.__in_c:
+                self.__in_v = True
+
+            elif name == 'is' and self.__in_c:
+                self.__in_is = True
+
+            elif name == 't' and self.__in_is:
+                self.__in_t = True
+
+            elif name == 'mergeCell':
+                self.__sheet._raw_merges.append(getAttr(attributes, 'ref'))
+
+
+        def endElement(self, name):
+
+            if name == 'row':
+                self.__in_row = False
+                self.__sheet._raw_rows.append(self.__row)
+
+            elif name == 'c' and self.__in_row:
+                self.__in_c = False
+                self.__row.append(self.__make_value())
+                self.__chunks.clear()
+                self.__datatype = None
+                self.style = None
+
+            elif name == 'v' and self.__in_c:
+                self.__in_v = False
+
+            elif name == 'is' and self.__in_c:
+                self.__in_is = False
+
+            elif name == 't' and self.__in_is:
+                self.__in_t = False
+
+
+        def characters(self, content):
+
+            if self.__in_v or self.__in_t:
+                self.__chunks.append(content)
+
+
+        def __make_value(self):
+            """ Figure out the scalar value to include for a cell 
+
+            Uses the current type and style, and may look up styles and shared strings
+            in the parent workbook.
+
+            """
+
+            # Special case: if we haven't seen any text chunks, return None
+            if len(self.__chunks) == 0:
+                return None
+
+            # Merge all the text chunks (more efficient than using + each time
+            value = ''.join(self.__chunks)
+
+            if self.__datatype == 'b': # boolean
+                pass
+
+            elif self.__datatype == 'd': # date
+                pass
+
+            elif self.__datatype == 'e': # error
+                pass
+
+            elif self.__datatype == 'inlineStr':
+                pass
+
+            elif self.__datatype == 'n': # number
+                if self.__workbook.convert_values:
+                    try:
+                        if '.' in value:
+                            value = float(value)
+                        else:
+                            value = int(value)
+                    except ValueError:
+                        logger.warning("Cannot convert %s to a number", value)
+
+            elif self.__datatype == 's': # shared string
+                value = self.__workbook.shared_strings[int(value)]
+
+            elif self.__datatype == 'str': # simple inline string
+                pass
+
+            # return the modified value
+            return value

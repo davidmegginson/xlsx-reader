@@ -13,7 +13,19 @@ from . import resolve_path
 
 class TestSheet(unittest.TestCase):
 
-    EXPECTED_CONTENT = [
+    EXPECTED_COLS = [
+        {'collapsed': False, 'hidden': False, 'min': 1, 'max': 1, 'style': '0'},
+        {'collapsed': False, 'hidden': False, 'min': 2, 'max': 2, 'style': '0'},
+        {'collapsed': False, 'hidden': False, 'min': 3, 'max': 3, 'style': '0'},
+        {'collapsed': False, 'hidden': False, 'min': 4, 'max': 4, 'style': '0'},
+        {'collapsed': False, 'hidden': False, 'min': 5, 'max': 5, 'style': '0'},
+        {'collapsed': False, 'hidden': False, 'min': 6, 'max': 6, 'style': '0'},
+        {'collapsed': False, 'hidden': False, 'min': 7, 'max': 7, 'style': '0'},
+        {'collapsed': False, 'hidden': False, 'min': 8, 'max': 8, 'style': '0'},
+        {'collapsed': False, 'hidden': False, 'min': 9, 'max': 9, 'style': '0'},
+    ]
+
+    EXPECTED_ROWS = [
         ['Qué?', None, None, 'Quién?', 'Para quién?', None, 'Dónde?', None, 'Cuándo?'],
         ['Registro', 'Sector/Cluster', 'Subsector', 'Organización', 'Hombres', 'Mujeres', 'País', 'Departamento/Provincia/Estado', None],
         [None, '#sector+es', '#subsector+es', '#org+es', '#targeted+f', '#targeted+m', '#country', '#adm1', '#date+reported'],
@@ -23,7 +35,7 @@ class TestSheet(unittest.TestCase):
         ['004', 'WASH', 'Urbano', 'OMS', '80', '95', 'Venezuela', 'Amazonas'],
     ]
     
-    EXPECTED_CONTENT_CONVERTED = [
+    EXPECTED_ROWS_CONVERTED = [
         ['Qué?', None, None, 'Quién?', 'Para quién?', None, 'Dónde?', None, 'Cuándo?'],
         ['Registro', 'Sector/Cluster', 'Subsector', 'Organización', 'Hombres', 'Mujeres', 'País', 'Departamento/Provincia/Estado', None],
         [None, '#sector+es', '#subsector+es', '#org+es', '#targeted+f', '#targeted+m', '#country', '#adm1', '#date+reported'],
@@ -54,15 +66,15 @@ class TestSheet(unittest.TestCase):
     def test_filename(self):
         self.assertEqual('xl/worksheets/sheet1.xml', self.sheet.filename)
 
+    def test_cols(self):
+        self.assertEqual(self.EXPECTED_COLS, self.sheet.cols)
+
     def test_rows(self):
-        content = [row for row in self.sheet.rows]
-        print(content)
-        self.assertEqual(self.EXPECTED_CONTENT, content)
+        self.assertEqual(self.EXPECTED_ROWS, self.sheet.rows)
 
     def test_rows_converted(self):
         self.workbook.convert_values = True
-        content = [row for row in self.sheet.rows]
-        self.assertEqual(self.EXPECTED_CONTENT_CONVERTED, content)
+        self.assertEqual(self.EXPECTED_ROWS_CONVERTED, self.sheet.rows)
 
     def test_merges(self):
         self.assertEqual(self.EXPECTED_MERGES, self.sheet.merges)
