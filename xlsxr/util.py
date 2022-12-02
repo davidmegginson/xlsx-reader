@@ -15,13 +15,13 @@ def to_num(s):
 def to_int(s):
     try:
         return int(s)
-    except ValueError:
+    except TypeError:
         return s
 
 def to_float(s):
     try:
         return float(s)
-    except ValueError:
+    except TypeError:
         return s
 
 def to_bool(s):

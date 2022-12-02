@@ -216,10 +216,12 @@ class Sheet:
                 pass
 
             elif self.__datatype == 'n': # number
-                cell_format = self.__workbook.styles.cell_formats[self.__style]
+                cell_format = None
+                if self.__style is not None:
+                    cell_format = self.__workbook.styles.cell_formats[self.__style]
 
                 # is it a date or datetime? Excel handles these awkwardly
-                if cell_format['has_date']:
+                if cell_format is not None and cell_format['has_date']:
                     value = to_num(value)
                     if cell_format['has_time']:
                         dt = datetime.fromordinal(datetime(1900, 1, 1).toordinal() + value - 2)

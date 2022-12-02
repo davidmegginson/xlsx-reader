@@ -26,18 +26,20 @@ class Styles:
             cell_format['has_time'] = False
 
             # get a cleaned-up version of the format string, with literals removed
-            s = self.number_formats[cell_format['numFmtId']]
-            s = re.sub(r'(?:\'[^\']*\'|"[^"]*"|\\.)', '', s)
+            key = cell_format['numFmtId']
+            if key in self.number_formats:
+                s = self.number_formats[cell_format['numFmtId']]
+                s = re.sub(r'(?:\'[^\']*\'|"[^"]*"|\\.)', '', s).lower()
 
-            # look for key characters
-            for c in ('y', 'd',):
-                if c in s:
-                    cell_format['has_date'] = True
-                    break
-            for c in ('h', 's',):
-                if c in s:
-                    cell_format['has_time'] = True
-                    break
+                # look for key characters
+                for c in ('y', 'd',):
+                    if c in s:
+                        cell_format['has_date'] = True
+                        break
+                for c in ('h', 's',):
+                    if c in s:
+                        cell_format['has_time'] = True
+                        break
 
 
     class __SAXHandler(xml.sax.handler.ContentHandler):
