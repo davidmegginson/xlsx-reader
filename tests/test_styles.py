@@ -64,11 +64,11 @@ EXPECTED_CELL_STYLE_FORMATS = [
 ]
 
 EXPECTED_CELL_FORMATS = [
-    {'numFmtId': '164', 'applyProtection': False, 'protection': {'locked': True, 'hidden': False}},
-    {'numFmtId': '164', 'applyProtection': False, 'protection': {'locked': True, 'hidden': False}},
-    {'numFmtId': '164', 'applyProtection': False, 'protection': {'locked': True, 'hidden': False}},
-    {'numFmtId': '164', 'applyProtection': False, 'protection': {'locked': True, 'hidden': False}},
-    {'numFmtId': '165', 'applyProtection': False, 'protection': {'locked': True, 'hidden': False}},
+    {'numFmtId': '164', 'applyProtection': False, 'protection': {'locked': True, 'hidden': False}, 'has_date': False, 'has_time': False,},
+    {'numFmtId': '164', 'applyProtection': False, 'protection': {'locked': True, 'hidden': False}, 'has_date': False, 'has_time': False,},
+    {'numFmtId': '164', 'applyProtection': False, 'protection': {'locked': True, 'hidden': False}, 'has_date': False, 'has_time': False,},
+    {'numFmtId': '164', 'applyProtection': False, 'protection': {'locked': True, 'hidden': False}, 'has_date': False, 'has_time': False,},
+    {'numFmtId': '165', 'applyProtection': False, 'protection': {'locked': True, 'hidden': False}, 'has_date': True, 'has_time': False,},
 ]
 
 EXPECTED_CELL_STYLES = [

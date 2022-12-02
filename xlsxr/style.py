@@ -1,4 +1,4 @@
-import xml.sax
+import re, xml.sax
 
 from xlsxr.util import get_attr, to_bool
 
@@ -15,6 +15,30 @@ class Styles:
         handler = Styles.__SAXHandler(self)
         with self.workbook.archive.open(filename, "r") as stream:
             xml.sax.parse(stream, handler)
+
+        # Guess which cell formats are dates, times, or date-times
+        self.__guess_dates()
+
+    def __guess_dates(self):
+        """ Update the cell formats to flag whether they represent dates and/or times """
+        for cell_format in self.cell_formats:
+            cell_format['has_date'] = False
+            cell_format['has_time'] = False
+
+            # get a cleaned-up version of the format string, with literals removed
+            s = self.number_formats[cell_format['numFmtId']]
+            s = re.sub(r'(?:\'[^\']*\'|"[^"]*"|\\.)', '', s)
+
+            # look for key characters
+            for c in ('y', 'd',):
+                if c in s:
+                    cell_format['has_date'] = True
+                    break
+            for c in ('h', 's',):
+                if c in s:
+                    cell_format['has_time'] = True
+                    break
+
 
     class __SAXHandler(xml.sax.handler.ContentHandler):
 
