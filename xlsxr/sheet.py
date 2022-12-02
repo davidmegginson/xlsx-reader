@@ -9,7 +9,9 @@
 
 import logging, xml.sax
 
-from xlsxr.util import get_attr, to_float, to_int, to_bool
+from datetime import datetime
+
+from xlsxr.util import get_attr, to_num, to_float, to_int, to_bool
 
 logger = logging.getLogger(__name__)
 
@@ -113,6 +115,7 @@ class Sheet:
             # Local accumulators for the handler
             self.__row = None
             self.__datatype = None
+            self.__style = None
             self.__chunks = [] # we can reuse this list
 
             # Very simple parse context
@@ -141,7 +144,7 @@ class Sheet:
             elif name == 'c' and self.__in_row:
                 self.__in_c = True
                 self.__datatype = get_attr(attributes, 't')
-                self.style = get_attr(attributes, 's')
+                self.__style = to_int(get_attr(attributes, 's'))
 
             elif name == 'v' and self.__in_c:
                 self.__in_v = True
@@ -166,8 +169,6 @@ class Sheet:
                 self.__in_c = False
                 self.__row.append(self.__make_value())
                 self.__chunks.clear()
-                self.__datatype = None
-                self.style = None
 
             elif name == 'v' and self.__in_c:
                 self.__in_v = False
@@ -215,11 +216,27 @@ class Sheet:
                 pass
 
             elif self.__datatype == 'n': # number
-                if self.__workbook.convert_values:
-                    if '.' in value:
-                        value = to_float(value)
+
+                cell_format = self.__workbook.styles.cell_formats[self.__style]
+
+                # is it a date or datetime? Excel handles these awkwardly
+                if cell_format['has_date']:
+                    value = to_num(value)
+                    dt = datetime.fromordinal(datetime(1900, 1, 1).toordinal() + value - 2)
+                    if cell_format['has_time']:
+                        if self.__workbook.convert_values:
+                            value = dt
+                        else:
+                            value = dt.strftime('%Y-%m-%dT%H:%M:%S')
                     else:
-                        value = to_int(value)
+                        if self.__workbook.convert_values:
+                            value = dt.date()
+                        else:
+                            value = dt.strftime('%Y-%m-%d')
+
+                # ok, just a normal number
+                elif self.__workbook.convert_values:
+                    value = to_num(value)
 
             elif self.__datatype == 's': # shared string
                 value = self.__workbook.shared_strings[int(value)]

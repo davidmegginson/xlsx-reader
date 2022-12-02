@@ -7,7 +7,7 @@
 """
 
 import unittest
-import xlsxr
+import datetime, xlsxr
 
 from . import resolve_path
 
@@ -29,7 +29,7 @@ class TestSheet(unittest.TestCase):
         ['Qué?', None, None, 'Quién?', 'Para quién?', None, 'Dónde?', None, 'Cuándo?'],
         ['Registro', 'Sector/Cluster', 'Subsector', 'Organización', 'Hombres', 'Mujeres', 'País', 'Departamento/Provincia/Estado', None],
         [None, '#sector+es', '#subsector+es', '#org+es', '#targeted+f', '#targeted+m', '#country', '#adm1', '#date+reported'],
-        ['001', 'WASH', 'Higiene', 'ACNUR', '100', '100', 'Panamá', 'Los Santos', '42064'], # FIXME - is a date
+        ['001', 'WASH', 'Higiene', 'ACNUR', '100', '100', 'Panamá', 'Los Santos', '2015-03-01'], # FIXME - is a date
         ['002', 'Salud', 'Vacunación', 'OMS', 'Colombia', 'Cauca'],
         ['003', 'Educación', 'Formación de enseñadores', 'UNICEF', '250', '300', 'Colombia', 'Chocó'],
         ['004', 'WASH', 'Urbano', 'OMS', '80', '95', 'Venezuela', 'Amazonas'],
@@ -39,7 +39,7 @@ class TestSheet(unittest.TestCase):
         ['Qué?', None, None, 'Quién?', 'Para quién?', None, 'Dónde?', None, 'Cuándo?'],
         ['Registro', 'Sector/Cluster', 'Subsector', 'Organización', 'Hombres', 'Mujeres', 'País', 'Departamento/Provincia/Estado', None],
         [None, '#sector+es', '#subsector+es', '#org+es', '#targeted+f', '#targeted+m', '#country', '#adm1', '#date+reported'],
-        ['001', 'WASH', 'Higiene', 'ACNUR', 100, 100, 'Panamá', 'Los Santos', 42064], # FIXME - is a date
+        ['001', 'WASH', 'Higiene', 'ACNUR', 100, 100, 'Panamá', 'Los Santos', datetime.date(2015,3,1)], # FIXME - is a date
         ['002', 'Salud', 'Vacunación', 'OMS', 'Colombia', 'Cauca'],
         ['003', 'Educación', 'Formación de enseñadores', 'UNICEF', 250, 300, 'Colombia', 'Chocó'],
         ['004', 'WASH', 'Urbano', 'OMS', 80, 95, 'Venezuela', 'Amazonas'],

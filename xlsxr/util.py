@@ -6,6 +6,12 @@ def get_attr(attributes, name):
     except KeyError:
         return None
 
+def to_num(s):
+    if '.' in s:
+        return to_float(s)
+    else:
+        return to_int(s)
+
 def to_int(s):
     try:
         return int(s)
