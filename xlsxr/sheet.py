@@ -9,7 +9,7 @@
 
 import logging, xml.sax
 
-from datetime import datetime
+from datetime import datetime, date
 
 from xlsxr.util import get_attr, to_num, to_float, to_int, to_bool
 
@@ -216,25 +216,25 @@ class Sheet:
                 pass
 
             elif self.__datatype == 'n': # number
-
                 cell_format = self.__workbook.styles.cell_formats[self.__style]
 
                 # is it a date or datetime? Excel handles these awkwardly
                 if cell_format['has_date']:
                     value = to_num(value)
-                    dt = datetime.fromordinal(datetime(1900, 1, 1).toordinal() + value - 2)
                     if cell_format['has_time']:
+                        dt = datetime.fromordinal(datetime(1900, 1, 1).toordinal() + value - 2)
                         if self.__workbook.convert_values:
                             value = dt
                         else:
                             value = dt.strftime('%Y-%m-%dT%H:%M:%S')
                     else:
+                        dt = date.fromordinal(datetime(1900, 1, 1).toordinal() + value - 2)
                         if self.__workbook.convert_values:
-                            value = dt.date()
+                            value = dt
                         else:
                             value = dt.strftime('%Y-%m-%d')
 
-                # ok, just a normal number
+                # just a plain old number
                 elif self.__workbook.convert_values:
                     value = to_num(value)
 

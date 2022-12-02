@@ -8,7 +8,7 @@ Python3 library optimised for reading very large Excel XLSX files, including tho
 ```
 from xlsxr import Workbook
 
-workbook = Workbook(filename="myworkbook.xlsx")
+workbook = Workbook(filename="myworkbook.xlsx", convert_values=True)
 
 for sheet in workbook.sheets:
     print("Sheet ", sheet.name)
@@ -18,7 +18,7 @@ for sheet in workbook.sheets:
 
 # Conversions
 
-By default, everything is a string. If you supply the optional convert_values to the Worksheet constructor, the library will convert numbers. For now, dates are just weird numbers (Excel doesn't flag dates as dates per se; you have to figure it it from the style template).
+By default, everything is a string, and all dates and datetimes will appear in ISO 8601 format (YYYY-mm-dd or YYYY-mm-ddTHH:MM:SS). If you supply the option convert_values to the Worksheet constructor, the library will convert numbers to ints or floats, and dates to datetime.datetime or datetime.date objects. There is no attempt to handle standalone times.
 
 
 # License
