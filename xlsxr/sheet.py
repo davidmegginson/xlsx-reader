@@ -42,6 +42,21 @@ class Sheet:
         self._raw_rows = None
         self._raw_merges = None
 
+    def get_col(self, index):
+        """ Get info about a single column
+
+        Parameters:
+          index(int): the 0-based index of the column
+
+        Return:
+          A dict with column info, or None if there was no match
+
+        """
+        for col in self.cols:
+            if col["min"] <= index + 1 <= col["max"]:
+                return col
+        return None
+
     @property
     def cols(self):
         """ Get the columns, parsing the sheet on demand """

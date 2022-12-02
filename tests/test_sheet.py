@@ -79,4 +79,7 @@ class TestSheet(unittest.TestCase):
     def test_merges(self):
         self.assertEqual(self.EXPECTED_MERGES, self.sheet.merges)
 
+    def test_get_col(self):
+        self.assertEqual(self.EXPECTED_COLS[2], self.sheet.get_col(2))
+
         
