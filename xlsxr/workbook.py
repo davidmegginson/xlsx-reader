@@ -6,7 +6,7 @@
 @date: Started 2020-03-20
 """
 
-import io, logging, requests, shutil, tempfile, xlsxr.sheet, xml.dom.pulldom, zipfile
+import io, logging, requests, shutil, tempfile, xlsxr.style, xlsxr.sheet, xml.dom.pulldom, zipfile
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,10 @@ class Workbook:
 
         self.relations = dict()
         """ Dict of relations """
-        
+
+        self.styles = None
+        """ Object of type xlsxr.style.Styles with style information """
+
         self.setup() # will throw an exception if it's not an XLSX file
             
 
@@ -74,7 +77,8 @@ class Workbook:
         except KeyError:
             logger.info("No sharedStrings.xml in this workbook")
             
-
+        self.styles = xlsxr.style.Styles(self, "xl/styles.xml")
+        
 
     def parse_workbook(self, stream):
         """ Parse the workbook metadata

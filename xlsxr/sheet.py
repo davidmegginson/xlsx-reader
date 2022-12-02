@@ -81,13 +81,13 @@ class Sheet:
     def __parse_sheet(self):
         """ On-demand parsing of the sheet itself """
 
-        handler = Sheet.__SheetSAXHandler(self)
+        handler = Sheet.__SAXHandler(self)
 
         with self.workbook.archive.open(self.filename) as stream:
             xml.sax.parse(stream, handler)
 
 
-    class __SheetSAXHandler(xml.sax.ContentHandler):
+    class __SAXHandler(xml.sax.handler.ContentHandler):
         """ SAX content handler for parsing a sheet XML file
 
         Populates the following lists in the parent sheet:
