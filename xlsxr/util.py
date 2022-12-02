@@ -1,25 +1,26 @@
 """ Utility methods to simplify working with the DOM """
 
-def getAttr(attributes, name):
+def get_attr(attributes, name):
     try:
         return attributes.getValue(name)
     except KeyError:
         return None
 
-def makeInt(s):
+def to_int(s):
     try:
         return int(s)
     except ValueError:
         return s
 
-def makeFloat(s):
+def to_float(s):
     try:
         return float(s)
     except ValueError:
         return s
 
-def makeBool(s):
+def to_bool(s):
     if s is None:
         return False
     else:
         return s.lower() in ('t', 'true', '1', 'yes', 'y')
+

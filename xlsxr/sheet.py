@@ -7,9 +7,9 @@
 
 """
 
-import datetime, logging, xml.sax
+import logging, xml.sax
 
-from xlsxr.util import getAttr, makeFloat, makeInt, makeBool
+from xlsxr.util import get_attr, to_float, to_int, to_bool
 
 logger = logging.getLogger(__name__)
 
@@ -127,11 +127,11 @@ class Sheet:
 
             if name == 'col':
                 self.__sheet._raw_cols.append({
-                    "collapsed": makeBool(getAttr(attributes, "collapsed")),
-                    "hidden": makeBool(getAttr(attributes, "hidden")),
-                    "min": makeInt(getAttr(attributes, "min")),
-                    "max": makeInt(getAttr(attributes, "max")),
-                    "style": getAttr(attributes, "style"),
+                    "collapsed": to_bool(get_attr(attributes, "collapsed")),
+                    "hidden": to_bool(get_attr(attributes, "hidden")),
+                    "min": to_int(get_attr(attributes, "min")),
+                    "max": to_int(get_attr(attributes, "max")),
+                    "style": get_attr(attributes, "style"),
                 })
 
             if name == 'row':
@@ -140,8 +140,8 @@ class Sheet:
 
             elif name == 'c' and self.__in_row:
                 self.__in_c = True
-                self.__datatype = getAttr(attributes, 't')
-                self.style = getAttr(attributes, 's')
+                self.__datatype = get_attr(attributes, 't')
+                self.style = get_attr(attributes, 's')
 
             elif name == 'v' and self.__in_c:
                 self.__in_v = True
@@ -153,7 +153,7 @@ class Sheet:
                 self.__in_t = True
 
             elif name == 'mergeCell':
-                self.__sheet._raw_merges.append(getAttr(attributes, 'ref'))
+                self.__sheet._raw_merges.append(get_attr(attributes, 'ref'))
 
 
         def endElement(self, name):
@@ -200,8 +200,10 @@ class Sheet:
             # Merge all the text chunks (more efficient than using + each time
             value = ''.join(self.__chunks)
 
+            # Tweak by datatype
             if self.__datatype == 'b': # boolean
-                pass
+                if self.__workbook.convert_values:
+                    value = to_bool(value)
 
             elif self.__datatype == 'd': # date
                 pass
@@ -214,13 +216,10 @@ class Sheet:
 
             elif self.__datatype == 'n': # number
                 if self.__workbook.convert_values:
-                    try:
-                        if '.' in value:
-                            value = float(value)
-                        else:
-                            value = int(value)
-                    except ValueError:
-                        logger.warning("Cannot convert %s to a number", value)
+                    if '.' in value:
+                        value = to_float(value)
+                    else:
+                        value = to_int(value)
 
             elif self.__datatype == 's': # shared string
                 value = self.__workbook.shared_strings[int(value)]
@@ -228,5 +227,5 @@ class Sheet:
             elif self.__datatype == 'str': # simple inline string
                 pass
 
-            # return the modified value
+            # Return the tweaked value
             return value
