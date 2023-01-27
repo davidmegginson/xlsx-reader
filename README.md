@@ -18,7 +18,7 @@ for sheet in workbook.sheets:
 
 ## Conversions
 
-By default, everything is a string, and all dates and datetimes will appear in ISO 8601 format (YYYY-mm-dd or YYYY-mm-ddTHH:MM:SS). If you supply the option convert_values to the Worksheet constructor, the library will convert numbers to ints or floats, and dates to datetime.datetime or datetime.date objects. There is no attempt to handle standalone times.
+By default, everything is a string, and all dates and datetimes will appear in ISO 8601 format (YYYY-mm-dd or YYYY-mm-ddTHH:MM:SS). If you supply the option _convert\_values_ to the Worksheet constructor, the library will convert numbers to ints or floats, and dates to datetime.datetime or datetime.date objects. There is no attempt to handle standalone times.
 
 Empty cells appear as None.
 
