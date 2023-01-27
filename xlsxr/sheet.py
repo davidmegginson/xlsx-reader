@@ -11,7 +11,7 @@ import logging, xml.sax
 
 from datetime import datetime, date
 
-from xlsxr.util import get_attr, to_num, to_float, to_int, to_bool
+from xlsxr.util import get_attr, parse_col_num, to_num, to_float, to_int, to_bool
 
 logger = logging.getLogger(__name__)
 
@@ -125,6 +125,10 @@ class Sheet:
             self.__in_is = False
             self.__in_t = False
 
+            # Track the column position
+            self.__col_num = None
+            self.__last_col_num = None
+
 
         def startElement(self, name, attributes):
 
@@ -140,9 +144,12 @@ class Sheet:
             if name == 'row':
                 self.__in_row = True
                 self.__row = []
+                self.__last_col_num = -1
+                self.__col_num = None
 
             elif name == 'c' and self.__in_row:
                 self.__in_c = True
+                self.__col_num = parse_col_num(get_attr(attributes, 'r'))
                 self.__datatype = get_attr(attributes, 't')
                 self.__style = to_int(get_attr(attributes, 's'))
 
@@ -167,6 +174,12 @@ class Sheet:
 
             elif name == 'c' and self.__in_row:
                 self.__in_c = False
+
+                # Are there blank cells preceeding this one?
+                for n in range(self.__last_col_num + 1, self.__col_num):
+                    self.__row.append(None)
+                self.__last_col_num = self.__col_num
+                
                 self.__row.append(self.__make_value())
                 self.__chunks.clear()
 

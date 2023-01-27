@@ -30,3 +30,11 @@ def to_bool(s):
     else:
         return s.lower() in ('t', 'true', '1', 'yes', 'y')
 
+def parse_col_num(cell_name):
+    """ Calculate the column number from a cell name """
+    col_num = 0
+    for c in cell_name.upper():
+        n = ord(c)
+        if 65 <= n <= 90:
+            col_num = col_num * 26 + n - 65
+    return col_num
