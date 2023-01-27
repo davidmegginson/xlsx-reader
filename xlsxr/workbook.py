@@ -17,7 +17,7 @@ class Workbook:
     """ An Excel XLSX workbook
     """
 
-    def __init__(self, filename=None, stream=None, url=None, convert_values=False):
+    def __init__(self, filename=None, stream=None, url=None, convert_values=False, fill_merged=False):
         """ Open an Excel file.
         One of filename, stream, and url must be specified.
 
@@ -26,9 +26,12 @@ class Workbook:
             stream: file-like object (byte stream)
             url: web address of a remote Excel file
             convert_values: if True, convert numbers and dates from strings to Python values (default is False)
+            fill_merged: if True, fill merged areas with repeated values
         """
 
         self.convert_values = convert_values
+
+        self.fill_merged = fill_merged
 
         if filename is not None:
             logger.debug("Opening from file %s", filename)

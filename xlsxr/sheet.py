@@ -11,7 +11,7 @@ import logging, xml.sax
 
 from datetime import datetime, date
 
-from xlsxr.util import get_attr, parse_col_num, to_num, to_float, to_int, to_bool
+from xlsxr.util import get_attr, parse_cell_ref, parse_cell_range, to_num, to_float, to_int, to_bool
 
 logger = logging.getLogger(__name__)
 
@@ -130,6 +130,17 @@ class Sheet:
             self.__last_col_num = -1
             self.__last_row_num = 0
 
+        def endDocument(self):
+
+            # Fill merged areas if requested (has to happen at the end)
+            if self.__workbook.fill_merged:
+                for merge in self.__sheet._raw_merges:
+                    (start_row, start_col,), (end_row, end_col,) = parse_cell_range(merge)
+                    value = self.__sheet._raw_rows[start_row][start_col]
+                    for i in range(start_row, end_row + 1):
+                        for j in range(start_col, end_col + 1):
+                            self.__sheet._raw_rows[i][j] = value
+                
 
         def startElement(self, name, attributes):
 
@@ -156,7 +167,7 @@ class Sheet:
 
             elif name == 'c' and self.__in_row:
                 self.__in_c = True
-                self.__col_num = parse_col_num(get_attr(attributes, 'r'))
+                self.__col_num = parse_cell_ref(get_attr(attributes, 'r'))[1]
                 self.__datatype = get_attr(attributes, 't')
                 self.__style = to_int(get_attr(attributes, 's'))
 

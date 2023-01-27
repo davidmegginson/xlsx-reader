@@ -85,9 +85,15 @@ class TestSheet(unittest.TestCase):
     def test_get_col(self):
         self.assertEqual(self.EXPECTED_COLS[2], self.sheet.get_col(2))
 
-    def test_broken(self):
+    def test_namespace_uri(self):
+        """ Test with a different prefix for the relationships namespace """
         EXPECTED_HEADERS = ['ISO3', 'Name', 'Year', 'Start Date', 'Event Name', 'Hazard Category', 'Hazard Type', 'New Displacements',]
         workbook = xlsxr.Workbook(filename=resolve_path("input-broken.xlsx"))
+        self.assertEqual(EXPECTED_HEADERS, workbook.sheets[0].rows[0])
+
+    def test_fill_merged(self):
+        EXPECTED_HEADERS = ['Qué?', 'Qué?', 'Qué?', 'Quién?', 'Para quién?', 'Para quién?', 'Dónde?', 'Dónde?', 'Cuándo?']
+        workbook = xlsxr.Workbook(filename=resolve_path("simple.xlsx"), fill_merged=True)
         self.assertEqual(EXPECTED_HEADERS, workbook.sheets[0].rows[0])
         
         
