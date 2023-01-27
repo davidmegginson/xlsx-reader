@@ -38,3 +38,4 @@ def parse_col_num(cell_name):
         if 65 <= n <= 90:
             col_num = col_num * 26 + n - 65
     return col_num
+

@@ -125,9 +125,10 @@ class Sheet:
             self.__in_is = False
             self.__in_t = False
 
-            # Track the column position
+            # Track the positions
             self.__col_num = None
-            self.__last_col_num = None
+            self.__last_col_num = -1
+            self.__last_row_num = 0
 
 
         def startElement(self, name, attributes):
@@ -146,6 +147,12 @@ class Sheet:
                 self.__row = []
                 self.__last_col_num = -1
                 self.__col_num = None
+
+                # Fill in any missing rows
+                row_num = int(get_attr(attributes, 'r'))
+                for n in range(self.__last_row_num + 1, row_num):
+                    self.__sheet._raw_rows.append([])
+                self.__last_row_num = row_num
 
             elif name == 'c' and self.__in_row:
                 self.__in_c = True
