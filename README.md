@@ -20,7 +20,7 @@ for sheet in workbook.sheets:
 
 By default, everything is a string, and all dates and datetimes will appear in ISO 8601 format (YYYY-mm-dd or YYYY-mm-ddTHH:MM:SS). If you supply the option _convert\_values_ to the Worksheet constructor, the library will convert numbers to ints or floats, and dates to datetime.datetime or datetime.date objects. There is no attempt to handle standalone times.
 
-Empty cells appear as None.
+Empty cells appear as the empty string ''.
 
 ## xlsxr.workbook.Workbook class
 
@@ -52,7 +52,7 @@ Property | Description
 workbook | The parent Workbook objet
 name | The name of the sheet
 sheet\_id | The internal identifier of the sheet
-state | The state of the sheet.
+state | The state of the sheet (normally 'visible' or 'hidden')
 relation\_id | ??
 cols | A list of metadata for each column.
 rows | A list of the data rows in the sheet (parsed on demand).

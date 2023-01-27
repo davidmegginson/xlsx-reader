@@ -184,7 +184,7 @@ class Sheet:
 
                 # Are there blank cells preceeding this one?
                 for n in range(self.__last_col_num + 1, self.__col_num):
-                    self.__row.append(None)
+                    self.__row.append('')
                 self.__last_col_num = self.__col_num
                 
                 self.__row.append(self.__make_value())
@@ -216,7 +216,7 @@ class Sheet:
 
             # Special case: if we haven't seen any text chunks, return None
             if len(self.__chunks) == 0:
-                return None
+                return ''
 
             # Merge all the text chunks (more efficient than using + each time
             value = ''.join(self.__chunks)
