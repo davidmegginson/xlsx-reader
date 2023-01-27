@@ -10,12 +10,12 @@ import io, logging, requests, shutil, tempfile, xlsxr.style, xlsxr.sheet, xml.do
 
 logger = logging.getLogger(__name__)
 
+SPREADSHEETML_NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+RELATIONSHIPS_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 
 class Workbook:
     """ An Excel XLSX workbook
     """
-
-    NAMESPACE_REL = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 
     def __init__(self, filename=None, stream=None, url=None, convert_values=False):
         """ Open an Excel file.
@@ -90,11 +90,11 @@ class Workbook:
         
         for event, node in doc:
             if event == xml.dom.pulldom.START_ELEMENT:
-                if node.localName == 'sheet':
+                if node.namespaceURI == SPREADSHEETML_NS and node.localName == 'sheet':
                     name = node.getAttribute('name')
                     sheet_id = node.getAttribute('sheetId')
                     state = node.getAttribute('state')
-                    relation_id = node.getAttribute('r:id') # FIXME use namespace
+                    relation_id = node.getAttributeNS(RELATIONSHIPS_NS, 'id')
                     filename = self.relations.get(relation_id)
                     if filename.startswith('/'):
                         filename = filename[1:]

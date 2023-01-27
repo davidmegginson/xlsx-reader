@@ -29,7 +29,7 @@ class TestSheet(unittest.TestCase):
         ['Qué?', '', '', 'Quién?', 'Para quién?', '', 'Dónde?', '', 'Cuándo?'],
         ['Registro', 'Sector/Cluster', 'Subsector', 'Organización', 'Hombres', 'Mujeres', 'País', 'Departamento/Provincia/Estado', ''],
         ['', '#sector+es', '#subsector+es', '#org+es', '#targeted+f', '#targeted+m', '#country', '#adm1', '#date+reported'],
-        ['001', 'WASH', 'Higiene', 'ACNUR', '100', '100', 'Panamá', 'Los Santos', '2015-03-01'], # FIXME - is a date
+        ['001', 'WASH', 'Higiene', 'ACNUR', '100', '100', 'Panamá', 'Los Santos', '2015-03-01'],
         ['002', 'Salud', 'Vacunación', 'OMS', '', '', 'Colombia', 'Cauca'],
         ['003', 'Educación', 'Formación de enseñadores', 'UNICEF', '250', '300', 'Colombia', 'Chocó'],
         [],
@@ -40,7 +40,7 @@ class TestSheet(unittest.TestCase):
         ['Qué?', '', '', 'Quién?', 'Para quién?', '', 'Dónde?', '', 'Cuándo?'],
         ['Registro', 'Sector/Cluster', 'Subsector', 'Organización', 'Hombres', 'Mujeres', 'País', 'Departamento/Provincia/Estado', ''],
         ['', '#sector+es', '#subsector+es', '#org+es', '#targeted+f', '#targeted+m', '#country', '#adm1', '#date+reported'],
-        ['001', 'WASH', 'Higiene', 'ACNUR', 100, 100, 'Panamá', 'Los Santos', datetime.date(2015,3,1)], # FIXME - is a date
+        ['001', 'WASH', 'Higiene', 'ACNUR', 100, 100, 'Panamá', 'Los Santos', datetime.date(2015,3,1)],
         ['002', 'Salud', 'Vacunación', 'OMS', '', '', 'Colombia', 'Cauca'],
         ['003', 'Educación', 'Formación de enseñadores', 'UNICEF', 250, 300, 'Colombia', 'Chocó'],
         [],
@@ -48,6 +48,7 @@ class TestSheet(unittest.TestCase):
     ]
 
     EXPECTED_MERGES = ['A1:C1', 'E1:F1', 'G1:H1',]
+
     
     def setUp(self):
         self.workbook = xlsxr.Workbook(filename=resolve_path("simple.xlsx"))
@@ -84,4 +85,9 @@ class TestSheet(unittest.TestCase):
     def test_get_col(self):
         self.assertEqual(self.EXPECTED_COLS[2], self.sheet.get_col(2))
 
+    def test_broken(self):
+        EXPECTED_HEADERS = ['ISO3', 'Name', 'Year', 'Start Date', 'Event Name', 'Hazard Category', 'Hazard Type', 'New Displacements',]
+        workbook = xlsxr.Workbook(filename=resolve_path("input-broken.xlsx"))
+        self.assertEqual(EXPECTED_HEADERS, workbook.sheets[0].rows[0])
+        
         
